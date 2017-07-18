@@ -1,0 +1,20 @@
+{
+  "name": "parallel-checker",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rliskovenko/parallel-checker.git"
+  },
+  "author": "rliskovenko",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rliskovenko/parallel-checker/issues"
+  },
+  "homepage": "https://github.com/rliskovenko/parallel-checker#readme",
+  "dependencies": {
+    "yargs": "^8.0.2"
+  }
+}
