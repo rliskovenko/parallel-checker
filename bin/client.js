@@ -9,15 +9,28 @@ var params = {
 };
 
 for ( i = params.startPort; i <= params.startPort + params.portCount; i++ ) {
-  var s = new net.Socket;
-  s.connect( params.singlePort ? params.startPort : i, params.connect, function () {
-    var socket = this;
-    setInterval( function () {
-      socket.write( socket.localPort.toString() );
-    }, 1000 );
-  } );
+  var client = new net.Socket;
+  client.connect( params.singlePort ? params.startPort : i, params.connect, function () {
+                    var sock = this;
+                    setInterval( function () {
+                      var toWatcher = setTimeout( function () {
+                        console.dir( { err : 'Timed out', port : sock.localPort } );
+                      }, 1000 );
+                      sock.on( 'data', function ( data ) {
+                        if ( data != 'OK: ' + sock.localPort.toString() ) {
+                          console.log( "Got: " + data.toString() );
+                        }
+                        clearTimeout( toWatcher );
+                        sock.removeAllListeners( 'data' );
+                        toWatcher = null;
+                      } );
+                      sock.write( sock.localPort.toString() );
+                    }, 1000 );
+                  }
+  )
+  ;
 
-  s.on( 'error', function ( err ) {
+  client.on( 'error', function ( err ) {
     console.error( err );
   } );
 }

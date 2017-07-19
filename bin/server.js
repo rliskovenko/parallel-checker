@@ -9,32 +9,48 @@ var params = {
 };
 
 if ( params.singlePort ) {
-  var s = new net.createServer( function ( s ) {
-    s.on( 'close', function () {
+  var srv = new net.createServer( function ( sock ) {
+    sock.on( 'close', function () {
       console.log( "Disconnected" );
-    } )
+    } );
+    sock.on( 'data', function ( data ) {
+      this.write( 'OK: ' + data );
+    } );
+    sock.on( 'error', function ( err ) {
+      console.error( err );
+    } );
   } );
 
-  s.on( 'error', function ( err ) {
+  srv.on( 'error', function ( err ) {
     console.error( err );
   } );
 
-  s.listen( params.startPort, params.listen );
+  srv.listen( params.startPort, params.listen );
 } else {
   for ( i = params.startPort; i <= params.startPort + params.portCount; i++ ) {
-    var s = new net.createServer( function ( s ) {
-      var port = s.localPort;
-      s.on( 'close', function () {
+    var mSrv = new net.createServer( function ( sock ) {
+      var port = sock.localPort;
+      sock.on( 'close', function () {
         console.log( "Disconnected from " + port );
-      } )
+      } );
+      sock.on( 'data', function ( data ) {
+        try {
+          this.write( 'OK: ' + data );
+        } catch ( e ) {
+          console.dir( e );
+        }
+      } );
+      sock.on( 'error', function ( err ) {
+        console.error( err );
+      } );
     } );
 
-    s.on( 'connection', function ( socket ) { } );
-    s.on( 'error', function ( err ) {
+    mSrv.on( 'connection', function ( socket ) { } );
+    mSrv.on( 'error', function ( err ) {
       console.error( err );
     } );
 
-    s.listen( i, params.listen );
+    mSrv.listen( i, params.listen );
   }
 
 }
