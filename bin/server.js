@@ -1,5 +1,5 @@
-const net   = require( 'net' );
-const yargs = require( 'yargs' ).argv;
+const net   = require( 'net' ),
+      yargs = require( 'yargs' ).argv;
 
 var params = {
   listen     : yargs.l || '127.0.0.1',
