@@ -1,7 +1,7 @@
 const net   = require( 'net' ),
       util  = require( "util" ),
-      yargs = require( 'yargs' ).argv,
-      EE    = require( 'events' ).EventEmitter;
+      EE    = require( 'events' ).EventEmitter,
+      yargs = require( 'yargs' ).argv;
 
 // -n -- amount of opened ports
 // -s -- to use a single port, thus changing -n to be an amount of parallel connection to that single port
@@ -41,7 +41,7 @@ function InfoJob() {
     this._whatsup = { new : 0, del : 0 };
     this._started = null;
 
-    console.log( "Current connections: " + this._active.toString() + " New per second: " + nps.toFixed().toString() + " Delete per second: " + dps.toFixed().toString() );
+    console.log( "Connections: " + this._active.toString() + "\tConnect/s: " + nps.toFixed().toString() + "\tDisconnect\s: " + dps.toFixed().toString() );
   };
 }
 
@@ -49,35 +49,36 @@ function InfoJob() {
 function createConnection( port, notifier ) {
   var client = new net.Socket;
   client.connect( port, params.connect, function () {
-                    var sock = this;
+                    var toWatcher = null;
                     notifier.emit( 'start' );
                     setInterval( function () {
-                      var toWatcher = setTimeout( function () {
-                        if ( !sock.destroyed ) {
-                          console.dir( { err : 'Timed out', port : sock.localPort } );
+                      toWatcher = setTimeout( function () {
+                        if ( !this.destroyed ) {
+                          console.dir( { err : 'Timed out', port : this.localPort } );
                         } else {
-                          sock.removeAllListeners();
-                          clearTimeout( toWatcher );
+                          this.removeAllListeners();
+                          toWatcher && clearTimeout( toWatcher );
                         }
-                      }, 1000 );
-                      sock.on( 'data', function ( data ) {
-                        if ( !sock.destroyed && data != 'OK: ' + sock.localPort.toString() ) {
-                          console.log( "Consistency failed: " + data.toString() );
+                      }.bind( this ), 3000 );
+                      this.on( 'data', function ( data ) {
+                        var d = data.toString();
+                        if ( !this.destroyed && (d.indexOf( '[' + this.localPort.toString() + ']' ) < 0 ) ) {
+                          console.log( "Consistency failed: >" + d + "<" );
                         }
-                        clearTimeout( toWatcher );
-                        sock.removeAllListeners( 'data' );
+                        toWatcher && clearTimeout( toWatcher );
+                        this.removeAllListeners( 'data' );
                         toWatcher = null;
                         if ( params.freshConnection ) {
-                          sock.destroy();
-                          sock.removeAllListeners();
+                          this.destroy();
+                          this.removeAllListeners();
                           notifier.emit( 'stop' );
                           createConnection( port, notifier );
                         }
-                      } );
-                      if ( !sock.destroyed && sock.localPort ) {
-                        sock.write( sock.localPort.toString() );
+                      }.bind( this ) );
+                      if ( !this.destroyed && this.localPort ) {
+                        this.write( this.localPort.toString() );
                       }
-                    }, 1000 );
+                    }.bind( this ), 1000 );
                   }
   );
 
